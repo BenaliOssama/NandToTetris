@@ -1,0 +1,9 @@
+(LOOP)
+@KBD
+D=M
+@START
+D;JNE
+@LOOP
+0;JMP
+
+
