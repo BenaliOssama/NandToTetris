@@ -1,21 +1,31 @@
 // Declaration
+// R0 --> end 
 @SCREEN
 D=A
 @8192
 D=D+A
 @R0
 M=D
-// liste for key press
-(LOOP)
+
+
+
+
+/////////////////////////////
+// listen for key press
+(KEY)
 @KBD
 D=M
-@START
+@BLACK
 D;JNE
-@LOOP
+@KEY
 0;JMP
 
+
+
+
+
 // blacken the screen
-(START)
+(BLACK)
 
 // n --> screen
 @SCREEN
@@ -27,14 +37,14 @@ M=D
 // listen for key unpressed
 @KBD
 D=M
-@LOOP
+@WHITE
 D;JEQ
 // if (n == R0) go to end 
 @R0
 D=M
 @n
 D=D-M
-@END
+@KEY
 D;JEQ
 
 // n ++
@@ -47,7 +57,37 @@ M=M+1
 0;JMP
 
 (END)
-@END
+@KEY
 0;JMP
 // end 
 
+
+
+
+
+(WHITE)
+// first make the screen white
+// n --> screen
+@SCREEN
+D=A
+@n
+M=D
+
+// if (n == R0) go to end 
+(WLOOP)
+@R0
+D=M
+@n
+D=D-M
+@KEY
+D;JEQ
+// colore white 
+@n
+A=M
+M=0
+// n ++
+@n
+M=M+1
+@WLOOP
+0;JMP
+// end whitening the screen
