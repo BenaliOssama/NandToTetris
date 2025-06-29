@@ -18,7 +18,7 @@
  * clocked: although they are affected by the instruction's execution, they commit to
  * their new values only in the next cycle.
  */
-CHIP CPU {
+ CHIP CPU {
 
     IN  inM[16],         // M value input  (M = contents of RAM[A])
         instruction[16], // Instruction for execution
@@ -51,16 +51,20 @@ CHIP CPU {
         a= toMux,
         b= inM,
         sel= instruction[0],
-        out= aluOut2
+        out= toAlu2
     );
-    //    IN in[16], reset, load, inc;
+    /*CHIP PC {
+    IN in[16], reset, load, inc;
+    OUT out[16];*/
+
     PC(
         in=toMux,
         load= true,
         inc=true,
         reset=false,
-        out=pc
+        out[0..15]=pcOut
     );
+    
     /*
         IN  
         x[16], y[16],  // 16-bit inputs        
@@ -76,7 +80,7 @@ CHIP CPU {
         ng;      // if (out < 0)  equals 1, else 0
     */
     ALU(x=toAlu1, y=toAlu2, zx=true, nx=false, zy=true,
-        ny=false, f=false , no=false, out=outM, out=aluOUt,
+        ny=false, f=false , no=false, out=outM, out=aluOut,
         zr=writeM,
     ng=set );
 }
