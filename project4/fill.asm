@@ -7,9 +7,6 @@ D=D+A
 @R0
 M=D
 
-
-
-
 /////////////////////////////
 // listen for key press
 (KEY)
@@ -19,10 +16,6 @@ D=M
 D;JNE
 @KEY
 0;JMP
-
-
-
-
 
 // blacken the screen
 (BLACK)
@@ -60,10 +53,6 @@ M=M+1
 @KEY
 0;JMP
 // end 
-
-
-
-
 
 (WHITE)
 // first make the screen white

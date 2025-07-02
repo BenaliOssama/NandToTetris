@@ -18,6 +18,8 @@
  * clocked: although they are affected by the instruction's execution, they commit to
  * their new values only in the next cycle.
  */
+ //346
+ // instruction ![6] --> A 
  CHIP CPU {
 
     IN  inM[16],         // M value input  (M = contents of RAM[A])
@@ -34,34 +36,40 @@
     PARTS:
 	//// Replace this comment with your code.
     /*first*/Mux16(
-        a=aluOut,
-        b= instruction,
+        a = instruction,
+        b= aluOut,
         sel= instruction[0],
         out= toAregister 
     );
+    Not( in=instruction[0] , out=setA );
     /*D*/Register(in= aluOut,
-        load=instruction[0],
+        load=instruction[11],
         out=toAlu1
     );
+    Or(a= setA, b= instruction[10], out=orSetA );
     /*A*/Register(in= toAregister,
-        load=instruction[0] ,
+        load= orSetA ,
         out=toMux
     );
     /*second*/Mux16(
         a= toMux,
         b= inM,
-        sel= instruction[0],
+        sel= instruction[4],
         out= toAlu2
     );
     /*CHIP PC {
     IN in[16], reset, load, inc;
     OUT out[16];*/
-
+    // instruction 15 and ng or nz i guess thinks like that 
+    Or(a= instruction[15], b=instruction[14] , out= dj );
+    Or(a= dj, b= instruction[13], out= jj);
+    /*_____________________logic for pc _________________*/
+    
     PC(
         in=toMux,
-        load= true,
+        load= jj,
         inc=true,
-        reset=false,
+        reset=reset,
         out[0..15]=pcOut
     );
     
@@ -79,8 +87,9 @@
         zr,      // if (out == 0) equals 1, else 0
         ng;      // if (out < 0)  equals 1, else 0
     */
-    ALU(x=toAlu1, y=toAlu2, zx=true, nx=false, zy=true,
-        ny=false, f=false , no=false, out=outM, out=aluOut,
-        zr=writeM,
+    ALU(x=toAlu1, y=toAlu2, zx=instruction[4], nx=instruction[5], zy=instruction[6],
+        ny=instruction[7], f=instruction[8] , no=instruction[9], out=outM, out=aluOut,
+        zr=zr,
     ng=set );
+    Or(a= true, b= instruction[12] , out= writeM );
 }
