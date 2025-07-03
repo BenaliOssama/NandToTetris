@@ -61,13 +61,47 @@
     IN in[16], reset, load, inc;
     OUT out[16];*/
     // instruction 15 and ng or nz i guess thinks like that 
-    Or(a= instruction[15], b=instruction[14] , out= dj );
-    Or(a= dj, b= instruction[13], out= jj);
     /*_____________________logic for pc _________________*/
-    
+    Or(a= true, b=instruction[13] , out= x);
+    Or(a=true, b=instruction[14], out=y);
+    Or(a=true, b=instruction[15], out=z);
+    Not(in=ng , out=pz);
+    Not(in=zr , out=nz);
+    //null
+    And(a=x , b=y , out=temp1 );
+    And(a=temp1 , b=z , out=temp2 );
+    Not(in=temp2 , out=null );
+    //JGT
+    And(a=z , b=pz , out=temp3 );
+    Or(a=temp3 , b=null , out=JGT);
+    //JEQ
+    And(a=y , b=zr , out=temp4);
+    Or(a=temp4 , b=JGT , out=JEQ);
+    //JGE
+    And(a=y , b=z , out=temp5 );
+    Or(a=pz , b=zr , out=temp6 );
+    And(a=temp5 , b=temp6 , out=temp7);
+    Or(a=temp7, b=JEQ , out=JGE);
+    //JLT
+    And(a=x , b=ng , out=temp8);
+    Or(a=temp8 , b=JGE , out=JLT);
+    //JNE
+    And(a=x , b=z , out=temp9);
+    And(a=temp9 , b=nz, out=temp10);
+    Or(a=temp10 , b=JLT , out=JNE );
+    //JLE
+    And(a=x , b=y , out=temp11);
+    Or(a=ng , b=zr , out= temp12 );
+    And(a=temp11 , b=temp12 , out=temp13 );
+    Or(a=temp13 , b=JNE , out=JLE );
+    //JMP
+    And(a=x , b=y , out=temp14 );
+    And(a=temp14 , b=z , out=temp15 );
+    Or(a=temp15 , b=JLE , out=JMP );
+
     PC(
         in=toMux,
-        load= jj,
+        load= JMP,
         inc=true,
         reset=reset,
         out[0..15]=pcOut
@@ -90,6 +124,6 @@
     ALU(x=toAlu1, y=toAlu2, zx=instruction[4], nx=instruction[5], zy=instruction[6],
         ny=instruction[7], f=instruction[8] , no=instruction[9], out=outM, out=aluOut,
         zr=zr,
-    ng=set );
+    ng=set, ng = ng );
     Or(a= true, b= instruction[12] , out= writeM );
 }
