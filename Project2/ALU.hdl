@@ -65,40 +65,41 @@
     Not(in=ng , out=pz);
     Not(in=zr , out=nz);
 
-
     //JGT
     And(a=z , b=pz , out=JGT );
 
-    //Or(a=temp3 , b=null , out=JGT);
-
     //JEQ
-    And(a=y , b=zr , out=temp4);
-    Or(a=temp4 , b=JGT , out=JEQ);
+    And(a=y , b=zr , out=JEQ);
 
     //JGE
-    And(a=y , b=z , out=temp5 );
-    Or(a=pz , b=zr , out=temp6 );
-    And(a=temp5 , b=temp6 , out=temp7);
-    Or(a=temp7, b=JEQ , out=JGE);
-    
-    //JLT
-    And(a=x , b=ng , out=temp8);
-    Or(a=temp8 , b=JGE , out=JLT);
-    //JNE
-    And(a=x , b=z , out=temp9);
-    And(a=temp9 , b=nz, out=temp10);
-    Or(a=temp10 , b=JLT , out=JNE );
-    //JLE
-    And(a=x , b=y , out=temp11);
-    Or(a=ng , b=zr , out= temp12 );
-    And(a=temp11 , b=temp12 , out=temp13 );
-    Or(a=temp13 , b=JNE , out=JLE );
-    //JMP
-    And(a=x , b=y , out=temp14 );
-    And(a=temp14 , b=z , out=temp15 );
-    Or(a=temp15 , b=JLE , out=JMP );
+    And(a=y , b=z , out=temp1 );
+    Or(a=JGT , b=JEQ , out=temp2 );
+    And(a=temp1 , b=temp2 , out=JGE);
 
-    And(a=instruction[15] , b=JMP , out=jump );
+    //JLT
+    And(a=x , b=ng , out=JLT);
+
+    //JNE
+    And(a=x , b=z , out=temp3);
+    And(a=temp3 , b=nz, out=JNE);
+
+    //JLE
+    And(a=x , b=y , out=temp4);
+    Or(a=JLT , b=JEQ , out= temp5 );
+    And(a=temp5 , b=temp4 , out=JLE );
+    
+    //JMP
+    And(a=x , b=y , out=temp6 );
+    And(a=temp6 , b=z , out=JMP );
+
+    Or(a=JGT , b=JEQ , out= jump1 );
+    Or(a= jump1, b= JGE, out=jump2);
+    Or(a= jump2, b= JLT, out=jump3);
+    Or(a= jump3, b= JNE, out=jump4);
+    Or(a= jump4, b= JLE, out=jump5);
+    Or(a= jump5, b= JMP, out=jump0);
+
+    And(a=instruction[15] , b=jump0 , out=jump );
 
     PC(
         in=toMux,
