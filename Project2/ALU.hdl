@@ -3,6 +3,7 @@
  //270
  //142
  //128
+ //54
  // instruction ![6] --> A 
  CHIP CPU {
 
@@ -28,9 +29,9 @@
     );
     
     Not( in=instruction[15] , out=ngc0 );
-    And(a=instruction[15] , b=instruction[4] , out=setD );
+    And(a=instruction[15] ,  b=instruction[4] , out=setD );
     /*D*/
-    Register(in= aluOut,
+    DRegister(in= aluOut,
         load=setD,
         out=toAlu1
     );
@@ -39,7 +40,7 @@
     And(a=instruction[15] , b=instruction[5] , out=c0andc12 );
     Or(a= ngc0, b= c0andc12 , out= setA );
     /*A*/
-    Register(in= toAregister,
+    ARegister(in= toAregister,
         load= setA ,
         out=toMux, out[0..14] =addressM
     );
