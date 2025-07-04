@@ -4,6 +4,7 @@
  //142
  //128
  //54
+ //4
  // instruction ![6] --> A 
  CHIP CPU {
 
@@ -57,29 +58,29 @@
     OUT out[16];*/
     // instruction 15 and ng or nz i guess thinks like that 
     /*_____________________logic for pc _________________*/
-    Or(a= true, b=instruction[2] , out= x);
-    Or(a=true, b=instruction[1], out=y);
-    Or(a=true, b=instruction[0], out=z);
+    Or(a= false, b=instruction[2] , out= x);
+    Or(a=false, b=instruction[1], out=y);
+    Or(a=false, b=instruction[0], out=z);
+
     Not(in=ng , out=pz);
     Not(in=zr , out=nz);
 
-    //null
-    And(a=x , b=y , out=temp1 );
-    And(a=temp1 , b=z , out=temp2 );
-    Not(in=temp2 , out=null );
 
     //JGT
-    And(a=z , b=pz , out=temp3 );
-    Or(a=temp3 , b=null , out=JGT);
+    And(a=z , b=pz , out=JGT );
+
+    //Or(a=temp3 , b=null , out=JGT);
 
     //JEQ
     And(a=y , b=zr , out=temp4);
     Or(a=temp4 , b=JGT , out=JEQ);
+
     //JGE
     And(a=y , b=z , out=temp5 );
     Or(a=pz , b=zr , out=temp6 );
     And(a=temp5 , b=temp6 , out=temp7);
     Or(a=temp7, b=JEQ , out=JGE);
+    
     //JLT
     And(a=x , b=ng , out=temp8);
     Or(a=temp8 , b=JGE , out=JLT);
@@ -96,6 +97,7 @@
     And(a=x , b=y , out=temp14 );
     And(a=temp14 , b=z , out=temp15 );
     Or(a=temp15 , b=JLE , out=JMP );
+
     And(a=instruction[15] , b=JMP , out=jump );
 
     PC(
