@@ -1,6 +1,8 @@
 
  //346
  //270
+ //142
+ //128
  // instruction ![6] --> A 
  CHIP CPU {
 
@@ -17,23 +19,27 @@
 
     PARTS:
 	//// Replace this comment with your code.
-    /*first*/Mux16(
+    /*first*/
+    Mux16(
         a = instruction,
         b= aluOut,
         sel= instruction[15],
         out= toAregister 
     );
-
+    
     Not( in=instruction[15] , out=ngc0 );
-    /*D*/Register(in= aluOut,
-        load=instruction[4],
+    And(a=instruction[15] , b=instruction[4] , out=setD );
+    /*D*/
+    Register(in= aluOut,
+        load=setD,
         out=toAlu1
     );
     // 
     
-    And(a=instruction[15] , b=instruction[3] , out=c0andc12 );
+    And(a=instruction[15] , b=instruction[5] , out=c0andc12 );
     Or(a= ngc0, b= c0andc12 , out= setA );
-    /*A*/Register(in= toAregister,
+    /*A*/
+    Register(in= toAregister,
         load= setA ,
         out=toMux, out[0..14] =addressM
     );
@@ -41,7 +47,7 @@
     /*second*/Mux16(
         a= toMux,
         b= inM,
-        sel= instruction[11],
+        sel= instruction[12],
         out= toAlu2
     );
 
@@ -115,14 +121,12 @@
     */
 
     ALU(x=toAlu1, y=toAlu2, 
-        zx=instruction[10], nx=instruction[9],
-        zy=instruction[8], ny=instruction[7],
-        f=instruction[6] , no=instruction[5],
-        out=temp0, zr=zr,
+        zx=instruction[11], nx=instruction[10],
+        zy=instruction[9], ny=instruction[8],
+        f=instruction[7] , no=instruction[6],
+        out=aluOut, out=outM, zr=zr,
         ng=ng );
         
-    Or16(a=false , b=temp0 , out=aluOut );
-    Or16(a=false , b=temp0 , out=outM );
 
     And(a=instruction[15] , b=instruction[3] , out=writeM );
 
