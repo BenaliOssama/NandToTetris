@@ -1,3 +1,4 @@
+
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
@@ -26,26 +27,37 @@ CHIP Memory {
 
     PARTS:
 
+    DMux4Way(in=load , sel=address[13..14] , a=laodRam1 , b=loadRam2 , c= loadScreen, d= loadKBD);
+    Or(a= laodRam1, b= loadRam2, out= loadRam);
+
     Or(a=false , b=address[14] , out= x);
     Or(a=false , b=address[13] , out= y);
+    Or(a=false , b=address[12] , out= z);
+
     Not(in= x, out= notx);
     Not(in= y, out= noty);
-
-    Or(a= false, b= notx, out= fromRam);
-    And(a= x, b= noty, out= fromScreen);
-    And(a= x, b= y , out= fromKBD);
+    Not(in= z, out= notz);
 
 
-    // RAM  up to  01 1111111111111 --> 13 
-    RAM16K(in=in , load=load, 
+    And(a= notx, b= noty, out= fromRam);
+    And(a= y, b= notz, out= fromScreen);
+    And(a= y, b= z, out= fromKBD);
+
+    //And(a= fromRam, b= load, out= loadRam);
+    //And(a= fromScreen, b= load, out= loadScreen);
+
+
+    // RAM  up to  01 1 1111 1111 1111
+    RAM16K(in=in , load=loadRam, 
     address=address[0..13], out=outRam);
 
-    // SCREEN from 10 0 000000000000 to 101 111111111111  
-    Screen(in=in , load= load, address=address[0..12] ,
+    // SCREEN from 10 1 1111 1111 1111  
+    Screen(in=in , load= loadScreen, address=address[0..12] ,
     out=outScreen );
 
-    //KEYBOARD 110000000000000  15 
+    //KEYBOARD     11 0 0000 0000 0000
     Keyboard(out=outKBD);
+
 
     /**
     * 4-way 16-bit multiplexor:
@@ -54,6 +66,7 @@ CHIP Memory {
     *       c if sel = 10
     *       d if sel = 11
     */
-    Mux4Way16(a= outRam, b= outRam, c= outScreen, d= outKBD, sel=address[13..14] , out= out);
+    Mux4Way16(a= outRam, b= outRam, c= outScreen,
+    d= outKBD, sel=address[13..14] , out= out);
 
 }
