@@ -1,11 +1,11 @@
+//346 errors
+//270 errors
+//142 errors
+//128 errors
+//54 errors
+//4 errors
+//0 error
 
- //346
- //270
- //142
- //128
- //54
- //4
- // instruction ![6] --> A 
  CHIP CPU {
 
     IN  inM[16],         // M value input  (M = contents of RAM[A])
@@ -20,35 +20,42 @@
         pc[15];          // address of next instruction
 
     PARTS:
-	//// Replace this comment with your code.
-    /*first*/
+    // is c instruction
+    Or(a=false , b=instruction[15] , out=isC);
+
+    /*Instructions Or ALU output */
     Mux16(
         a = instruction,
         b= aluOut,
-        sel= instruction[15],
-        out= toAregister 
+        sel= isC,
+        out= outMux1 
     );
     
-    
-    Not( in=instruction[15] , out=ngc0 );
-    And(a=instruction[15] ,  b=instruction[4] , out=setD );
-    /*D*/
+    // isA to load Register A
+    Not( in=isC , out=isA);
+
+
+    And(a=isC ,  b=instruction[4] , out=setD );
+
+    /*D register */
     DRegister(in= aluOut,
         load=setD,
-        out=toAlu1
+        out=outD
     );
-    // 
     
-    And(a=instruction[15] , b=instruction[5] , out=c0andc12 );
-    Or(a= ngc0, b= c0andc12 , out= setA );
-    /*A*/
-    ARegister(in= toAregister,
+    // distinationA
+    And(a=isC , b=instruction[5], out=c0andc12 );
+    Or(a= isA, b= c0andc12 , out= setA);
+
+    /*A register*/
+    ARegister(in= outMux1,
         load= setA ,
-        out=toMux, out[0..14] =addressM
+        out=outA, out[0..14] =addressM
     );
 
-    /*second*/Mux16(
-        a= toMux,
+    /*A register or M memory*/
+    Mux16(
+        a= outA,
         b= inM,
         sel= instruction[12],
         out= toAlu2
@@ -57,15 +64,20 @@
     /*CHIP PC {
     IN in[16], reset, load, inc;
     OUT out[16];*/
-    // instruction 15 and ng or nz i guess thinks like that 
     /*_____________________logic for pc _________________*/
     Or(a= false, b=instruction[2], out= x);
     Or(a=false, b=instruction[1], out=y);
     Or(a=false, b=instruction[0], out=z);
 
+    // nng not negative 
     Not(in=ng , out=nng);
+
+    // not 0 
     Not(in=zr , out=nz);
+
+    // positive
     And(a= nng , b=nz , out=pz );
+
     //JGT
     And(a=z, b=pz ,out=JGT);
 
@@ -80,34 +92,18 @@
     //JLT
     And(a=x , b=ng , out=JLT);
 
-    //JNE
-    And(a=x , b=z , out=temp3);
-    And(a=temp3 , b=nz, out=JNE);
-
-    //JLE
-    And(a=x , b=y , out=temp4);
-    Or(a=JLT , b=JEQ , out= temp5 );
-    And(a=temp5 , b=temp4 , out=JLE );
-    
-    //JMP
-    And(a=x , b=y , out=temp6 );
-    And(a=temp6 , b=z , out=JMP );
-
+    // greter or equal or negative cover all conditons 
     Or(a=JGT , b=JEQ , out= jump1 );
     Or(a= jump1, b= JGE, out=jump2);
-    Or(a= jump2, b= JLT, out=jump3);
+    Or(a= jump2, b= JLT, out=jump0);
 
-    // can be ignored
-    /*Or(a= jump3, b= JNE, out=jump4);
-    Or(a= jump4, b= JLE, out=jump5);
-    Or(a= jump5, b= JMP, out=jump0);*/
+    And(a=instruction[15] , b=jump0 , out=jump );
 
-    And(a=instruction[15] , b=jump3 , out=jump );
-
+    // if not jump then increment 
     Not(in=jump , out= increment);
 
     PC(
-        in=toMux,
+        in=outA,
         load= jump,
         inc=increment,
         reset=reset,
@@ -116,14 +112,13 @@
     
     /*________________________ALU________________________*/
 
-    ALU(x=toAlu1, y=toAlu2, 
+    ALU(x=outD, y=toAlu2, 
         zx=instruction[11], nx=instruction[10],
         zy=instruction[9], ny=instruction[8],
         f=instruction[7] , no=instruction[6],
         out=aluOut, out=outM, zr=zr,
-        ng=ng );
+    ng=ng );
         
-
     And(a=instruction[15] , b=instruction[3] , out=writeM );
 
 }
