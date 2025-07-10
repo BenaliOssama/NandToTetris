@@ -114,7 +114,7 @@ pub fn process( contents: &str) -> Vec<String> {
 
     for line in contents.lines() {
         let trimmed = line.trim();
-        let mut assembled = String::new(); 
+    let mut assembled = String::new(); 
         
         // instruction A
         if trimmed.starts_with("@"){
@@ -205,26 +205,54 @@ mod tests {
     use super::*;
 
     #[test]
-    fn case_sensitive() {
-        let query = "duct";
+    fn symbolecless() {
         let contents = "\
-Rust:
-safe, fast, productive.
-Pick three.
-Duct tape.";
+@16
+M=1
+@17
+M=0
+@16
+D=M
+@0
+D=D-M
+@18
+D;JGT
+@16
+D=M
+@17
+M=D+M
+@16
+M=M+1
+@4
+0;JMP
+@17
+D=M";
 
-        assert_eq!(vec!["safe, fast, productive."], process( contents));
-    }
+        let expected = vec![
+            "0000000000010000",
+            "1110111111001000",
+            "0000000000010001",
+            "1110101010001000",
+            "0000000000010000",
+            "1111110000010000",
+            "0000000000000000",
+            "1111010011010000",
+            "0000000000010010",
+            "1110001100000001",
+            "0000000000010000",
+            "1111110000010000",
+            "0000000000010001",
+            "1111000010001000",
+            "0000000000010000",
+            "1111110111001000",
+            "0000000000000100",
+            "1110101010000111",
+            "0000000000010001",
+            "1111110000010000",
+        ];
 
-    #[test]
-    fn case_insensitive() {
-        let query = "rUsT";
-        let contents = "\
-Rust:
-safe, fast, productive.
-Pick three.
-Trust me.";
+        let actual = process(&contents);
 
-        assert_eq!(vec!["Rust:", "Trust me."], search_case_insensitive(query, contents));
+        assert_eq!(expected, actual);
     }
 }
