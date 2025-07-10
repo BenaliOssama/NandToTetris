@@ -93,7 +93,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let contents = fs::read_to_string(config.file_path)?;
 
-    let results = &process(&contents);
+    let cleaned_content = clean(&contents);
+    let results = &process(cleaned_content);
 
     for line in results {
         writeln!(writer, "{}", line)?;
@@ -102,40 +103,52 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-
-/*
-A instruction @value 
-C instruction dest = comp ; jmp 
-white space 
-*/
-
-pub fn process( contents: &str) -> Vec<String> {
+fn clean(contents: &str)->Vec<&str>{
+    // you might want to remove comments an empty line and to 
+    // give values to all the symbols befor processing. 
     let mut results = Vec::new();
 
     for line in contents.lines() {
         let trimmed = line.trim();
-    let mut assembled = String::new(); 
-        
-        // instruction A
-        if trimmed.starts_with("@"){
-            assembled = a_instruction(&trimmed);
-        }else{
-            assembled = c_instruction(&trimmed);
-        } 
-        results.push(String::from(assembled)); 
+        if trimmed.len() != 0 && !trimmed.starts_with("//"){
+            results.push(line)
+        }
+            
+    }
+    results
+}
+
+pub fn process( contents: Vec<&str>) -> Vec<String> {
+    let mut results = Vec::new();
+    let mut line_number :u32= 0 ;
+
+    for line in contents {
+        if line.len() != 0 && !line.starts_with("//"){
+            let mut assembled = String::new(); 
+            
+            // instruction A
+            if line.starts_with("@"){
+                assembled = a_instruction(&line);
+            } else if line.starts_with('(') && line.ends_with(')') {
+                // Get label without parentheses
+                let value  = Some(&line[1..line.len()-1]);
+            }else {
+                assembled = c_instruction(&line);
+            } 
+            results.push(String::from(assembled));
+            line_number += 1;
+        }
     }
     
     results
 }
 
 fn a_instruction(input: &str) -> String {
-    // translate a instructions
     
-    // Remove the '@' and parse to number
     let num: u16 = input.trim_start_matches('@').parse().unwrap();
+ 
+    let binary = format!("{:016b}", num);    
 
-    // Format as 16-bit binary string, padded with 0s
-    let binary = format!("{:016b}", num);     
     binary
 }
 
@@ -205,7 +218,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn symbolecless() {
+    fn simple_test() {
         let contents = "\
 @16
 M=1
@@ -251,7 +264,7 @@ D=M";
             "1111110000010000",
         ];
 
-        let actual = process(&contents);
+        let actual = process(clean(&contents));
 
         assert_eq!(expected, actual);
     }
