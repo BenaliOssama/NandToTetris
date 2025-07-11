@@ -112,12 +112,10 @@ fn parse_c_instruction(line: &str) -> (String, String, String) {
 fn is_valid_variable_name(s: &str) -> bool {
     let mut chars = s.chars();
 
-    let _ = match chars.next() {
-        Some(c) if c.is_ascii_alphabetic() || c == '_' => c,
-        _ => {
-            return false;
-        }
-    };
+    match chars.next() {
+        Some(c) if c.is_ascii_alphabetic() || c == '_' || c == '.' || c == '$' || c == ':' => (),
+        _ => return false,
+    }
 
-    chars.all(|c| (c.is_ascii_alphanumeric() || c == '_'))
+    chars.all(|c| c.is_ascii_alphanumeric() || c == '_' || c == '.' || c == '$' || c == ':')
 }
