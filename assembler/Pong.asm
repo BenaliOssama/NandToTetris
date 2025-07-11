@@ -1,14 +1,12 @@
 // This file is part of www.nand2tetris.org
 // and the book "The Elements of Computing Systems"
 // by Nisan and Schocken, MIT Press.
+// File name: projects/06/pong/Pong.asm
 
-// This Pong game code was originally written in the high-level Jack language.
+// The Pong game program was originally written in the high-level Jack language.
 // The Jack code was then translated by the Jack compiler into VM code.
 // The VM code was then translated by the VM translator into the Hack
-// assembly code shown here. The variable and label symbols were generated
-// automatically by the translators. This information is given for context only.
-// Jack, the Jack compiler, and the VM translator are covered in Part II
-// of the course, and are irrelevant for project 6.
+// assembly code shown here.
 
 @256
 D=A
@@ -135,7 +133,7 @@ M=D
 D=A
 @R13
 D=D+M
-@Ssys.initP
+@SP
 D=M-D
 @ARG
 M=D
@@ -28355,7 +28353,7 @@ D=A
 @SP
 AM=M-1
 D=M
-@R5
+@R5gg
 M=D
 @0
 D=A
@@ -28365,11 +28363,11 @@ M=D
 D=A
 @R14
 M=D
-@RET_ADDRESS_CALL335
+@RET_ADDRESS_CALL334
 D=A
 @95
 0;JMP
-(RET_ADDRESS_CALL335)
+(RET_ADDRESS_CALL334)
 @SP
 AM=M-1
 D=M
