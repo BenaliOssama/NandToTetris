@@ -3,32 +3,32 @@ use std::fs;
 use std::io::{ BufWriter, Write };
 use std::collections::HashMap;
 
-
+pub mod processing;
 
 fn get_dest_table() -> HashMap<&'static str, &'static str> {
     let mut dest = HashMap::new();
-    dest.insert("",    "000");
-    dest.insert("M",   "001");
-    dest.insert("D",   "010");
-    dest.insert("MD",  "011");
-    dest.insert("A",   "100");
-    dest.insert("AM",  "101");
-    dest.insert("AD",  "110");
+    dest.insert("", "000");
+    dest.insert("M", "001");
+    dest.insert("D", "010");
+    dest.insert("MD", "011");
+    dest.insert("A", "100");
+    dest.insert("AM", "101");
+    dest.insert("AD", "110");
     dest.insert("AMD", "111");
     dest
 }
 
 fn get_comp_table() -> HashMap<&'static str, &'static str> {
     let mut comp = HashMap::new();
-    comp.insert("0",   "0101010");
-    comp.insert("1",   "0111111");
-    comp.insert("-1",  "0111010");
-    comp.insert("D",   "0001100");
-    comp.insert("A",   "0110000");
-    comp.insert("!D",  "0001101");
-    comp.insert("!A",  "0110001");
-    comp.insert("-D",  "0001111");
-    comp.insert("-A",  "0110011");
+    comp.insert("0", "0101010");
+    comp.insert("1", "0111111");
+    comp.insert("-1", "0111010");
+    comp.insert("D", "0001100");
+    comp.insert("A", "0110000");
+    comp.insert("!D", "0001101");
+    comp.insert("!A", "0110001");
+    comp.insert("-D", "0001111");
+    comp.insert("-A", "0110011");
     comp.insert("D+1", "0011111");
     comp.insert("A+1", "0110111");
     comp.insert("D-1", "0001110");
@@ -38,9 +38,9 @@ fn get_comp_table() -> HashMap<&'static str, &'static str> {
     comp.insert("A-D", "0000111");
     comp.insert("D&A", "0000000");
     comp.insert("D|A", "0010101");
-    comp.insert("M",   "1110000");
-    comp.insert("!M",  "1110001");
-    comp.insert("-M",  "1110011");
+    comp.insert("M", "1110000");
+    comp.insert("!M", "1110001");
+    comp.insert("-M", "1110011");
     comp.insert("M+1", "1110111");
     comp.insert("M-1", "1110010");
     comp.insert("D+M", "1000010");
@@ -53,7 +53,7 @@ fn get_comp_table() -> HashMap<&'static str, &'static str> {
 
 fn get_jump_table() -> HashMap<&'static str, &'static str> {
     let mut jump = HashMap::new();
-    jump.insert("",    "000");
+    jump.insert("", "000");
     jump.insert("JGT", "001");
     jump.insert("JEQ", "010");
     jump.insert("JGE", "011");
@@ -63,7 +63,6 @@ fn get_jump_table() -> HashMap<&'static str, &'static str> {
     jump.insert("JMP", "111");
     jump
 }
-
 
 pub struct Config {
     pub file_path: String,
@@ -93,8 +92,8 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     let contents = fs::read_to_string(config.file_path)?;
 
-    let cleaned_content = clean(&contents);
-    let results = &process(cleaned_content);
+    let cleaned_content = cleaning::clean(&contents);
+    let results = processing::process(cleaned_content);
 
     for line in results {
         writeln!(writer, "{}", line)?;
@@ -102,169 +101,212 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
 
     Ok(())
 }
+/*______________________module clean___________________ */
 
-fn clean(contents: &str)->Vec<&str>{
-    // you might want to remove comments an empty line and to 
-    // give values to all the symbols befor processing. 
-    let mut results = Vec::new();
+mod cleaning {
+    use regex::Regex;
 
-    for line in contents.lines() {
-        let trimmed = line.trim();
-        if trimmed.len() != 0 && !trimmed.starts_with("//"){
-            results.push(line)
-        }
-            
+    pub fn clean(input: &str) -> String {
+        let block_comments = Regex::new(r"(?s)/\*.*?\*/").unwrap();
+        let no_block = block_comments.replace_all(input, "");
+
+        let line_comments = Regex::new(r"//.*").unwrap();
+        let no_line = line_comments.replace_all(&no_block, "");
+
+        no_line
+            .lines()
+            .map(str::trim)
+            .filter(|line| !line.is_empty())
+            .collect::<Vec<_>>()
+            .join("\n")
     }
-    results
 }
 
-pub fn process( contents: Vec<&str>) -> Vec<String> {
-    let mut results = Vec::new();
-    let mut line_number :u32= 0 ;
+/*_____________________________________________________ */
 
-    for line in contents {
-        if line.len() != 0 && !line.starts_with("//"){
-            let mut assembled = String::new(); 
-            
-            // instruction A
-            if line.starts_with("@"){
-                assembled = a_instruction(&line);
-            } else if line.starts_with('(') && line.ends_with(')') {
-                // Get label without parentheses
-                let value  = Some(&line[1..line.len()-1]);
-            }else {
-                assembled = c_instruction(&line);
-            } 
-            results.push(String::from(assembled));
-            line_number += 1;
-        }
-    }
-    
-    results
-}
-
-fn a_instruction(input: &str) -> String {
-    
-    let num: u16 = input.trim_start_matches('@').parse().unwrap();
- 
-    let binary = format!("{:016b}", num);    
-
-    binary
-}
-
-
-
-fn c_instruction(c: &str) -> String {
-    // translate c instructions
-    let (dest, comp, jump) = parse_c_instruction(c);
-
-    let dest_map = get_dest_table();
-    let comp_map = get_comp_table();
-    let jump_map = get_jump_table();
-
-
-    // get binary parts, or panic if invalid
-    let dest_bin = dest_map.get(dest.as_str()).expect("Invalid dest");
-    let comp_bin = comp_map.get(comp.as_str()).expect("Invalid comp");
-    let jump_bin = jump_map.get(jump.as_str()).expect("Invalid jump");
-
-    // Build the final 16-bit instruction: "111" + comp + dest + jump
-    format!("111{}{}{}", comp_bin, dest_bin, jump_bin)
-
-}
-
-fn parse_c_instruction(line: &str) -> (String, String, String) {
-    let mut dest = "";
-    let mut comp = "";
-    let mut jump = "";
-
-    let mut comp_jump = line;
-
-    // Split dest
-    if let Some(eq_pos) = line.find('=') {
-        dest = &line[..eq_pos];
-        comp_jump = &line[eq_pos + 1..];
-    }
-
-    // Split jump
-    if let Some(semi_pos) = comp_jump.find(';') {
-        comp = &comp_jump[..semi_pos];
-        jump = &comp_jump[semi_pos + 1..];
-    } else {
-        comp = comp_jump;
-    }
-
-    (dest.to_string(), comp.to_string(), jump.to_string())
-}
-
-
-
-
-pub fn search_case_insensitive<'a>(query: &str, contents: &'a str) -> Vec<&'a str> {
-    let query = query.to_lowercase();
-    let mut results = Vec::new();
-
-    for line in contents.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line);
-        }
-    }
-
-    results
-}
-
+/*_________________test module_________________________________ */
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn simple_test() {
-        let contents = "\
-@16
-M=1
-@17
-M=0
-@16
-D=M
-@0
-D=D-M
-@18
-D;JGT
-@16
-D=M
-@17
-M=D+M
-@16
-M=M+1
-@4
-0;JMP
-@17
-D=M";
+        let contents =
+            "\
+        // This is a comment
+        @2
+        D=A // Set D to 2
+
+        /* multi-line
+        comment here */
+
+        @3
+        D=D+A
+
+        @0
+        M
+        (LOOP)
+        @LOOP";
 
         let expected = vec![
-            "0000000000010000",
-            "1110111111001000",
-            "0000000000010001",
-            "1110101010001000",
-            "0000000000010000",
-            "1111110000010000",
+            "0000000000000010",
+            "1110110000010000",
+            "0000000000000011",
+            "1110000010010000",
             "0000000000000000",
-            "1111010011010000",
-            "0000000000010010",
-            "1110001100000001",
-            "0000000000010000",
-            "1111110000010000",
-            "0000000000010001",
-            "1111000010001000",
-            "0000000000010000",
-            "1111110111001000",
-            "0000000000000100",
-            "1110101010000111",
-            "0000000000010001",
-            "1111110000010000",
+            "1111110000000000",
+            "0000000000000110"
         ];
 
-        let actual = process(clean(&contents));
+        let actual = processing::process(cleaning::clean(contents));
+
+        assert_eq!(expected, actual);
+    }
+
+    fn advance_test() {
+        let contents =
+            "\
+            // Declaration
+// R0 --> end 
+@SCREEN
+D=A
+@8192
+D=D+A
+@R0
+M=D
+
+/////////////////////////////
+// listen for key press
+(KEY)
+@KBD
+D=M
+@BLACK
+D;JNE
+@KEY
+0;JMP
+
+// blacken the screen
+(BLACK)
+
+// n --> screen
+@SCREEN
+D=A
+@n
+M=D
+
+(BLOOP)
+// listen for key unpressed
+@KBD
+D=M
+@WHITE
+D;JEQ
+// if (n == R0) go to end 
+@R0
+D=M
+@n
+D=D-M
+@KEY
+D;JEQ
+
+// n ++
+@n
+A=M
+M=-1
+@n
+M=M+1
+@BLOOP
+0;JMP
+
+(END)
+@KEY
+0;JMP
+// end 
+
+(WHITE)
+// first make the screen white
+// n --> screen
+@SCREEN
+D=A
+@n
+M=D
+
+// if (n == R0) go to end 
+(WLOOP)
+@R0
+D=M
+@n
+D=D-M
+@KEY
+D;JEQ
+// colore white 
+@n
+A=M
+M=0
+// n ++
+@n
+M=M+1
+@WLOOP
+0;JMP
+// end whitening the screen
+
+        ";
+
+        let expected = vec![
+"0100000000000000",
+"1110110000010000",
+"0010000000000000",
+"1110000010010000",
+"0000000000000000",
+"1110001100001000",
+"0110000000000000",
+"1111110000010000",
+"0000000000001100",
+"1110001100000101",
+"0000000000000110",
+"1110101010000111",
+"0100000000000000",
+"1110110000010000",
+"0000000000010000",
+"1110001100001000",
+"0110000000000000",
+"1111110000010000",
+"0000000000100011",
+"1110001100000010",
+"0000000000000000",
+"1111110000010000",
+"0000000000010000",
+"1111010011010000",
+"0000000000000110",
+"1110001100000010",
+"0000000000010000",
+"1111110000100000",
+"1110111010001000",
+"0000000000010000",
+"1111110111001000",
+"0000000000010000",
+"1110101010000111",
+"0000000000000110",
+"1110101010000111",
+"0100000000000000",
+"1110110000010000",
+"0000000000010000",
+"1110001100001000",
+"0000000000000000",
+"1111110000010000",
+"0000000000010000",
+"1111010011010000",
+"0000000000000110",
+"1110001100000010",
+"0000000000010000",
+"1111110000100000",
+"1110101010001000",
+"0000000000010000",
+"1111110111001000",
+"0000000000100111",
+"1110101010000111",
+        ];
+
+        let actual = processing::process(cleaning::clean(contents));
 
         assert_eq!(expected, actual);
     }
