@@ -87,7 +87,7 @@ impl Config {
 
 pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
     // Open output file for writing
-    let output_file = fs::File::create("output.txt")?;
+    let output_file = fs::File::create("output.hack")?;
     let mut writer = BufWriter::new(output_file);
 
     let contents = fs::read_to_string(config.file_path)?;
