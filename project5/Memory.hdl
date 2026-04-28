@@ -1,0 +1,42 @@
+
+
+CHIP Memory {
+    IN in[16], load, address[15];
+    OUT out[16];
+
+    PARTS:
+
+    DMux4Way(in=load , sel=address[13..14] , a=laodRam1 , b=loadRam2 , c= loadScreen, d= loadKBD);
+    Or(a= laodRam1, b= loadRam2, out= loadRam);
+
+    Or(a=false , b=address[14] , out= x);
+    Or(a=false , b=address[13] , out= y);
+    Or(a=false , b=address[12] , out= z);
+
+
+RAM16K(
+    in=in,
+    load=loadRam,
+    address=address[0..13],
+    out=outRam
+);
+
+    // SCREEN from 10 1 1111 1111 1111  
+    Screen(in=in , load= loadScreen, address=address[0..12] ,
+    out=outScreen );
+
+    //KEYBOARD     11 0 0000 0000 0000
+    Keyboard(out=outKBD);
+
+
+    /**
+    * 4-way 16-bit multiplexor:
+    * out = a if sel = 00
+    *       b if sel = 01
+    *       c if sel = 10
+    *       d if sel = 11
+    */
+    Mux4Way16(a=outRam, b=outRam, c= outScreen,
+    d= outKBD, sel=address[13..14] , out= out);
+
+}

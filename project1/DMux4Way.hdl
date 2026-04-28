@@ -14,5 +14,11 @@ CHIP DMux4Way {
     OUT a, b, c, d;
 
     PARTS:
-    //// Replace this comment with your code.
+    // First level: split by the first select bit
+    DMux(in=in, sel=sel[1], a=ab, b=cd);
+
+    // Second level: split each half by the second select bit
+    DMux(in=ab, sel=sel[0], a=a, b=b);
+    DMux(in=cd, sel=sel[0], a=c, b=d);
 }
+
